@@ -1,0 +1,17 @@
+- Dinic Complexity : V^2 * E
+- Cut Set : A set of edges which when removed source and sink gets disconnected
+- Cost of Cut Set : Summation of capacities of edges
+- Min cut : The cut set with the minimum cost
+- Min Cut = Max flow
+- Lower bound on edges : 
+    - important to be acyclic
+    - no need to maximize flow
+    - lower bound 'l' on edge u->v
+        - cap[u][v] -= l
+        - add a super sink ss with u with cap[u][ss] = l, a super source with v with
+            cap[tt][v] = l
+        - add an edge with original sink to original source with cap = inf
+        - if each edge outgoing from super source is completely filled, it is possible
+    - maximize and minimization of flow with demands:
+        
+
