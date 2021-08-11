@@ -1,81 +1,63 @@
-struct FlowEdge {
-    int v, u;
-    long long cap, flow = 0;
-    FlowEdge(int v, int u, long long cap) : v(v), u(u), cap(cap) {}
-};
+typedef long long ll;
+const ll INF = 1e15;
 
-struct Dinic {
-    const long long flow_inf = 1e18;
-    vector<FlowEdge> edges;
-    vector<vector<int>> adj;
-    int n, m = 0;
-    int s, t;
-    vector<int> level, ptr;
-    queue<int> q;
+struct Dinic{
+  struct Edge{
+    int to, idxf;
+    ll c, f; //idxf stands for idx for from node
+  };
+  int n;
+  vector<vector<Edge>> ed;
+  vector<int> l, nxt;
 
-    Dinic(int n, int s, int t) : n(n), s(s), t(t) {
-        adj.resize(n);
-        level.resize(n);
-        ptr.resize(n);
-    }
+  Dinic(int n):n(n){
+    ed.assign(n, vector<Edge>());
+  }
 
-    void add_edge(int v, int u, long long cap) {
-        edges.emplace_back(v, u, cap);
-        edges.emplace_back(u, v, 0);
-        adj[v].push_back(m);
-        adj[u].push_back(m + 1);
-        m += 2;
-    }
+  void add_edge(int u, int v, ll c){
+    ed[u].push_back({v,(int)ed[v].size(),c,0});
+    ed[v].push_back({u,(int)ed[u].size()-1,0,0});
+  }
 
-    bool bfs() {
-        while (!q.empty()) {
-            int v = q.front();
-            q.pop();
-            for (int id : adj[v]) {
-                if (edges[id].cap - edges[id].flow < 1)
-                    continue;
-                if (level[edges[id].u] != -1)
-                    continue;
-                level[edges[id].u] = level[v] + 1;
-                q.push(edges[id].u);
-            }
+  bool bfs(int s, int t){
+    l.assign(n,-1); l[s]=0;
+    queue<int> q; q.push(s);
+    while(!q.empty()){
+      int at=q.front();  q.pop();
+      for(auto& e: ed[at]){
+        if(l[e.to]==-1 and e.c>e.f){
+          l[e.to]=l[at]+1;
+          q.push(e.to);
         }
-        return level[t] != -1;
+      }
     }
+    return l[t]!=-1;
+  }
 
-    long long dfs(int v, long long pushed) {
-        if (pushed == 0)
-            return 0;
-        if (v == t)
-            return pushed;
-        for (int& cid = ptr[v]; cid < (int)adj[v].size(); cid++) {
-            int id = adj[v][cid];
-            int u = edges[id].u;
-            if (level[v] + 1 != level[u] || edges[id].cap - edges[id].flow < 1)
-                continue;
-            long long tr = dfs(u, min(pushed, edges[id].cap - edges[id].flow));
-            if (tr == 0)
-                continue;
-            edges[id].flow += tr;
-            edges[id ^ 1].flow -= tr;
-            return tr;
+  ll dfs(int at, int t,ll fl=INF){
+    if(at==t) return fl;
+    for( ; nxt[at]<ed[at].size(); nxt[at]++){
+      Edge &e=ed[at][nxt[at]];
+      if(e.c>e.f && l[e.to]==l[at]+1){
+        ll bn = dfs(e.to,t,min(fl,e.c-e.f));   //bn for bottleneck
+        if(bn>0){
+          e.f+=bn;
+          ed[e.to][e.idxf].f-=bn;
+          return bn;
         }
-        return 0;
+      }
     }
+    return 0;
+  }
 
-    long long flow() {
-        long long f = 0;
-        while (true) {
-            fill(level.begin(), level.end(), -1);
-            level[s] = 0;
-            q.push(s);
-            if (!bfs())
-                break;
-            fill(ptr.begin(), ptr.end(), 0);
-            while (long long pushed = dfs(s, flow_inf)) {
-                f += pushed;
-            }
-        }
-        return f;
+  ll mxflow(int s, int t){
+    ll ret=0;
+    while(bfs(s,t)){
+      nxt.assign(n,0);
+      while(ll fl=dfs(s,t)){
+        ret += fl;
+      }
     }
+    return ret;
+  }
 };
